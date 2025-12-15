@@ -1,0 +1,1007 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Support Assistant v3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light; }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Arial, sans-serif;
+      background: #f7f7f8;
+      color: #111827;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #f7f7f8;
+      padding: 10px 24px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-header-inner {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .app-header-title { font-weight: 600; }
+
+    .app-header-subtitle {
+      font-weight: 400;
+      opacity: 0.8;
+      margin-left: 6px;
+    }
+
+    #logoutBtn {
+      padding: 6px 12px;
+      background: #ef4444;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      display: none;
+    }
+
+    #logoutBtn:hover { background: #dc2626; }
+
+    /* Main layout */
+    .app-main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 24px 0 96px;
+    }
+
+    .main-inner {
+      width: 100%;
+      max-width: 960px;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Login / Signup View */
+    #loginView {
+      margin-top: 80px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      border: 1px solid #e5e7eb;
+    }
+
+    .login-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+
+    .login-label {
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: #0b74de;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+    }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 4px;
+      padding: 9px 14px;
+      background: #0b74de;
+      color: white;
+      border-radius: 999px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .login-error {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .login-toggle {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .login-toggle button {
+      border: none;
+      background: transparent;
+      color: #0b74de;
+      padding: 0;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Chat View */
+    #chatView {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #msgs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .msg {
+      max-width: 720px;
+      padding: 12px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .msg.user {
+      align-self: center;
+      background: #dbeafe;
+    }
+
+    .msg.bot {
+      align-self: center;
+      background: #f3f4f6;
+      border-radius: 18px;
+      max-width: 720px;
+    }
+
+    .msg.sys {
+      align-self: center;
+      background: #fef9c3;
+      border-radius: 18px;
+      border: 1px solid #facc15;
+      color: #854d0e;
+      font-size: 13px;
+    }
+
+    .msg.bot.rich { border-radius: 18px; }
+
+    .msg.bot div { margin-bottom: 4px; }
+
+    .muted {
+      opacity: 0.85;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .sources-toggle {
+      font-size: 12px;
+      color: #4b5563;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .sources-list {
+      font-size: 12px;
+      margin-top: 4px;
+      padding-left: 18px;
+    }
+
+    .chevron { font-size: 11px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #e5e7ff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: #374151;
+      margin-left: 6px;
+    }
+
+    /* Bottom input bar */
+    .input-bar-wrap {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: linear-gradient(
+        to top,
+        #f7f7f8 0,
+        #f7f7f8 70%,
+        rgba(247, 247, 248, 0.7) 100%
+      );
+      padding: 12px 16px 16px;
+      display: none;
+      justify-content: center;
+    }
+
+    .input-bar-inner {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .prompt-shell {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 6px 12px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+
+    .prompt-shell input[type="text"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      padding: 8px 6px;
+      background: transparent;
+    }
+
+    .icon-btn {
+      border: none;
+      background: transparent;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 17px;
+      color: #4b5563;
+      flex-shrink: 0;
+    }
+
+    .icon-btn:hover { background: #f3f4f6; }
+
+    .icon-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .ask-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: #0b74de;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }
+
+    .ask-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .config-hidden { display: none; }
+
+    @media (max-width: 640px) {
+      .app-main { padding: 16px 0 96px; }
+      .msg { max-width: 100%; }
+      .app-header-inner { font-size: 13px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div>
+          <span class="app-header-title">Smart Support Assistant v3</span>
+          <span class="app-header-subtitle">
+
+          </span>
+        </div>
+        <button id="logoutBtn">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="app-main">
+      <div class="main-inner">
+        <!-- LOGIN / SIGNUP VIEW -->
+        <section id="loginView">
+          <form id="loginForm" class="login-card">
+            <div id="loginTitle" class="login-title">Sign in</div>
+            <div id="loginSubtitle" class="login-subtitle">
+              Enter your email and password to use the assistant.
+            </div>
+
+            <label class="login-label" for="loginEmail">Email</label>
+            <input
+              id="loginEmail"
+              class="login-input"
+              type="email"
+              required
+              placeholder="you@example.com"
+            />
+
+            <label class="login-label" for="loginPassword">Password</label>
+            <input
+              id="loginPassword"
+              class="login-input"
+              type="password"
+              required
+              placeholder="••••••••"
+            />
+
+            <button id="loginBtn" class="login-btn" type="submit">
+              Sign in
+            </button>
+
+            <div class="login-toggle">
+              <span id="loginToggleText">Don’t have an account?</span>
+              <button type="button" id="loginToggleLink">Sign up</button>
+            </div>
+
+            <div id="loginError" class="login-error"></div>
+          </form>
+        </section>
+
+        <!-- CHAT VIEW -->
+        <section id="chatView">
+          <div id="msgs"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Hidden config -->
+    <div class="config-hidden">
+      <code id="cfg"></code>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-bar-wrap">
+      <div class="input-bar-inner">
+        <div class="prompt-shell">
+          <button
+            id="attachBtn"
+            class="icon-btn"
+            title="Upload &amp; ingest a document"
+          >
+            +
+          </button>
+          <input id="fileHidden" type="file" style="display:none" />
+
+          <button
+            id="micBtn"
+            class="icon-btn"
+            title="Click to record / stop"
+          >
+            🎤
+          </button>
+
+          <input id="q" type="text" placeholder="Ask a question…" />
+        </div>
+
+        <button id="ask" class="ask-btn">Ask</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- CONFIG ----
+    const ANSWER_URL     = "http://127.0.0.1:8000/api/answer";
+    const ESCALATE_URL   = "http://localhost:5678/webhook/escalate";
+    const UPLOAD_URL     = "http://127.0.0.1:8000/api/upload";
+    const TRANSCRIBE_URL = "http://127.0.0.1:8000/api/transcribe";
+    const INGEST_URL     = "http://127.0.0.1:8000/api/ingest";
+    const LOGIN_URL      = "http://127.0.0.1:8000/api/login";
+    const SIGNUP_URL     = "http://127.0.0.1:8000/api/signup";
+    const LOGOUT_URL     = "http://127.0.0.1:8000/api/logout";
+    const SOURCE_FILE_URL = "http://127.0.0.1:8000/api/source_file";
+
+    const cfg = document.getElementById("cfg");
+    cfg.textContent =
+      `ANSWER_URL=${ANSWER_URL} | ESCALATE_URL=${ESCALATE_URL} | ` +
+      `UPLOAD_URL=${UPLOAD_URL} | TRANSCRIBE_URL=${TRANSCRIBE_URL} | ` +
+      `LOGIN_URL=${LOGIN_URL} | SIGNUP_URL=${SIGNUP_URL}`;
+    console.log(cfg.textContent);
+
+    // ---- DOM references ----
+    const loginView   = document.getElementById("loginView");
+    const chatView    = document.getElementById("chatView");
+    const inputBar    = document.querySelector(".input-bar-wrap");
+    const loginForm   = document.getElementById("loginForm");
+    const loginEmail  = document.getElementById("loginEmail");
+    const loginPass   = document.getElementById("loginPassword");
+    const loginBtn    = document.getElementById("loginBtn");
+    const loginError  = document.getElementById("loginError");
+    const loginTitle  = document.getElementById("loginTitle");
+    const loginSubtitle = document.getElementById("loginSubtitle");
+    const loginToggleText  = document.getElementById("loginToggleText");
+    const loginToggleLink  = document.getElementById("loginToggleLink");
+
+    const logoutBtn   = document.getElementById("logoutBtn");
+
+    const msgs        = document.getElementById("msgs");
+    const askBtn      = document.getElementById("ask");
+    const input       = document.getElementById("q");
+    const attachBtn   = document.getElementById("attachBtn");
+    const fileHidden  = document.getElementById("fileHidden");
+    const micBtn      = document.getElementById("micBtn");
+
+    // ---- Utilities: messages ----
+    function add(type, text) {
+      const div = document.createElement("div");
+      div.className = `msg ${type}`;
+      div.textContent = text;
+      msgs.appendChild(div);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      return div;
+    }
+
+    function addHTML(type, html, isRich = false) {
+      const div = document.createElement("div");
+      div.className = `msg ${type}${isRich ? " rich" : ""}`;
+      div.innerHTML = html;
+      msgs.appendChild(div);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      return div;
+    }
+
+    async function safeFetch(url, opts) {
+      try {
+        const res  = await fetch(url, opts);
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        return { ok: res.ok, status: res.status, data };
+      } catch (e) {
+        return { ok:false, status:0, data:{ error: e.message } };
+      }
+    }
+
+    // ============================
+    //      AUTH MANAGEMENT
+    // ============================
+    function saveToken(t) { localStorage.setItem("ssa_token", t); }
+    function getToken()   { return localStorage.getItem("ssa_token"); }
+    function clearToken() { localStorage.removeItem("ssa_token"); }
+
+    async function authFetch(url, options = {}) {
+      const token = getToken();
+      options.headers = options.headers || {};
+      if (token) {
+        options.headers["X-Auth-Token"] = token;
+      }
+      const res = await safeFetch(url, options);
+
+      // Auto-logout on 401/403
+      if (!res.ok && (res.status === 401 || res.status === 403)) {
+        clearToken();
+        showLogin();
+        alert("Your session expired or is invalid. Please sign in again.");
+      }
+      return res;
+    }
+
+    function showChat() {
+      loginView.style.display = "none";
+      chatView.style.display  = "flex";
+      inputBar.style.display  = "flex";
+      logoutBtn.style.display = "inline-block";
+
+      if (msgs.children.length === 0) {
+        add("bot", "Hi! Ask me anything about your documents. If I’m not confident, I’ll escalate to a human right away.");
+      }
+    }
+
+    function showLogin() {
+      chatView.style.display  = "none";
+      inputBar.style.display  = "none";
+      logoutBtn.style.display = "none";
+      loginView.style.display = "flex";
+    }
+
+    // ---- Login / Signup mode toggle ----
+    let authMode = "login"; // or "signup"
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      if (mode === "login") {
+        loginTitle.textContent = "Sign in";
+        loginSubtitle.textContent = "Enter your email and password to use the assistant.";
+        loginBtn.textContent = "Sign in";
+        loginToggleText.textContent = "Don’t have an account?";
+        loginToggleLink.textContent = "Sign up";
+      } else {
+        loginTitle.textContent = "Create your account";
+        loginSubtitle.textContent = "Sign up with your email and a password to start using the assistant.";
+        loginBtn.textContent = "Sign up";
+        loginToggleText.textContent = "Already have an account?";
+        loginToggleLink.textContent = "Sign in";
+      }
+      loginError.textContent = "";
+    }
+
+    loginToggleLink.addEventListener("click", () => {
+      setAuthMode(authMode === "login" ? "signup" : "login");
+    });
+
+    // On initial load: if token exists, go straight to chat
+    if (getToken()) {
+      showChat();
+    } else {
+      showLogin();
+    }
+    setAuthMode("login");
+
+    // ---- Login / Signup form submit ----
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginError.textContent = "";
+      loginBtn.disabled = true;
+
+      const payload = {
+        email: loginEmail.value.trim(),
+        password: loginPass.value
+      };
+
+      const url = (authMode === "login" ? LOGIN_URL : SIGNUP_URL);
+
+      const res = await safeFetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      loginBtn.disabled = false;
+
+      if (!res.ok) {
+        const detail = res.data?.detail || res.data?.error || res.data?.raw || "Request failed.";
+        loginError.textContent = detail;
+        return;
+      }
+
+      const data = res.data || {};
+      if (!data.token) {
+        loginError.textContent = "Response missing token.";
+        return;
+      }
+
+      saveToken(data.token);
+      loginError.textContent = "";
+      loginPass.value = "";
+      showChat();
+    });
+
+    // ---- Logout button ----
+    logoutBtn.onclick = async () => {
+      const token = getToken();
+      if (token) {
+        await authFetch(LOGOUT_URL, {
+          method: "POST",
+          headers: { "X-Auth-Token": token }
+        });
+      }
+      clearToken();
+      msgs.innerHTML = "";
+      showLogin();
+    };
+
+    // ============================
+    //     SOURCES RENDERING
+    // ============================
+    function renderSources(sources, chunkCount) {
+      if (!Array.isArray(sources) || !sources.length) return "";
+
+      const uniq = [];
+      const seen = new Set();
+      for (const s of sources) {
+        const src  = s.source ?? s.path ?? s.file ?? "source";
+        const page = s.page ?? null;
+        const key  = `${src}::${page ?? ""}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniq.push({ src, page });
+      }
+
+      const count = uniq.length;
+      const chunksBadge =
+        typeof chunkCount === "number"
+          ? `<span class="badge">${chunkCount} chunk${chunkCount === 1 ? "" : "s"}</span>`
+          : "";
+
+      const items = uniq
+        .map(({ src, page }) => {
+          const pageLabel = page != null ? ` (p.${page})` : "";
+
+          // Don't try to open pseudo-sources like "local"
+          const isRealPath = src && src.toLowerCase() !== "local";
+
+          if (isRealPath) {
+            const href = `${SOURCE_FILE_URL}?path=${encodeURIComponent(src)}`;
+            // Single-click to open in new tab / download.
+            // If you really want double-click only, you could add ondblclick instead.
+            return `<li><a href="${href}" target="_blank" title="Open source file">${src}${pageLabel}</a></li>`;
+          } else {
+            return `<li>${src}${pageLabel}</li>`;
+          }
+        })
+        .join("");
+
+      const listId = `src-${Math.random().toString(36).slice(2)}`;
+
+      return `
+        <div class="muted">
+          <div class="sources-toggle" onclick="
+            const el=document.getElementById('${listId}');
+            if (!el) return;
+            const open = el.style.display !== 'none';
+            el.style.display = open ? 'none' : 'block';
+            this.querySelector('span.chevron').textContent = open ? '▶' : '▼';
+          ">
+            <span class="chevron">▼</span>
+            <span>Sources (${count})</span>
+            ${chunksBadge}
+          </div>
+          <ul id="${listId}" class="sources-list">
+            ${items}
+          </ul>
+        </div>
+      `;
+    }
+
+    // ============================
+    //   UPLOAD & INGEST ("+")
+    // ============================
+    async function uploadAndIngest(file) {
+      if (!file) return;
+
+      const infoMsg = add("sys", `Uploading "${file.name}"…`);
+
+      attachBtn.disabled = true;
+      askBtn.disabled    = true;
+      micBtn.disabled    = true;
+
+      // step 1 — upload to backend
+      const form = new FormData();
+      form.append("file", file, file.name);
+
+      const uploadRes = await authFetch(UPLOAD_URL, {
+        method: "POST",
+        body: form,
+      });
+
+      attachBtn.disabled = false;
+      askBtn.disabled    = false;
+      micBtn.disabled    = false;
+      infoMsg.remove();
+
+      if (!uploadRes.ok) {
+        const err = uploadRes.data?.detail 
+                ?? uploadRes.data?.error 
+                ?? uploadRes.data?.raw 
+                ?? "Unknown upload error";
+        add("sys", `Upload error: ${err}`);
+        return;
+      }
+
+      // step 2 — extract uploaded file path
+      const uploadData = uploadRes.data || {};
+      const serverPath = uploadData.server_path;
+      const fname = uploadData.original_filename || file.name;
+
+      if (!serverPath) {
+        add("sys", "Upload error: Missing server_path from backend.");
+        return;
+      }
+
+      // step 3 — INGEST THE FILE for vector search
+      const ingestRes = await authFetch("http://127.0.0.1:8000/api/ingest", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          paths: [serverPath],
+          reset_collection: false
+        })
+      });
+
+      if (!ingestRes.ok) {
+        let err = ingestRes.data?.detail 
+              ?? ingestRes.data?.error 
+              ?? JSON.stringify(ingestRes.data);
+        add("sys", `Ingest error: ${err}`);
+        return;
+      }
+
+      const ing = ingestRes.data;
+
+      add(
+        "sys",
+        `File "${fname}" ingested successfully. ${ing.chunks_added} chunks added.`
+      );
+    }
+
+    // When user clicks +, open file picker
+    attachBtn.addEventListener("click", () => {
+      if (!getToken()) {
+        add("sys", "Please sign in before uploading documents.");
+        return;
+      }
+      fileHidden.value = "";
+      fileHidden.click();
+    });
+
+    // When a file is picked, upload & ingest
+    fileHidden.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      await uploadAndIngest(file);
+      e.target.value = "";
+    });
+
+    // ============================
+    //      VOICE / WHISPER
+    // ============================
+    let mediaRecorder = null;
+    let audioChunks   = [];
+    let isRecording   = false;
+
+    async function sendAudioForTranscription(blob) {
+      const form = new FormData();
+      form.append("file", blob, "speech.webm");
+
+      const info = add("sys", "Transcribing audio…");
+      micBtn.disabled    = true;
+      askBtn.disabled    = true;
+      attachBtn.disabled = true;
+
+      const res = await authFetch(TRANSCRIBE_URL, {
+        method: "POST",
+        body: form
+      });
+
+      micBtn.disabled    = false;
+      askBtn.disabled    = false;
+      attachBtn.disabled = false;
+      info.remove();
+
+      if (!res.ok) {
+        const err =
+          res.data?.error ?? res.data?.raw ?? "Unknown transcription error";
+        add("sys", `Transcription error: ${err}`);
+        return;
+      }
+
+      const text = res.data?.text || "";
+      if (!text) {
+        add("sys", "No speech detected or empty transcription.");
+        return;
+      }
+
+      await ask(text);
+    }
+
+    async function toggleRecording() {
+      if (isRecording && mediaRecorder) {
+        mediaRecorder.stop();
+        isRecording = false;
+        micBtn.textContent = "🎤";
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        add("sys", "Microphone not supported in this browser.");
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          if (!audioChunks.length) return;
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          await sendAudioForTranscription(blob);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        micBtn.textContent = "■";
+        add("sys", "Recording… click the mic again to stop.");
+      } catch (e) {
+        add("sys", "Could not access microphone: " + e.message);
+      }
+    }
+
+    micBtn.addEventListener("click", toggleRecording);
+
+    // ============================
+    //        ASK / ANSWER
+    // ============================
+    async function ask(questionOverride) {
+      const q = (questionOverride ?? input.value).trim();
+      if (!q) return;
+
+      add("user", q);
+      input.value = "";
+      input.focus();
+
+      const thinking = add("sys", "Thinking…");
+      askBtn.disabled    = true;
+      attachBtn.disabled = true;
+      micBtn.disabled    = true;
+
+      const res = await authFetch(ANSWER_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: q })
+      });
+
+      thinking.remove();
+      askBtn.disabled    = false;
+      attachBtn.disabled = false;
+      micBtn.disabled    = false;
+
+      if (!res.ok) {
+        add(
+          "sys",
+          `Answer failed (status ${res.status}). Error: ${
+            res.data?.error ?? res.data?.raw ?? "Unknown"
+          }`
+        );
+        return;
+      }
+
+      const data       = res.data || {};
+      const answer     = data.answer ?? null;
+      const confidence = data.confidence ?? null;
+      const sources    = data.sources ?? [];
+      const error      = data.error ?? null;
+      const chunkCount = data.chunk_count ?? data.chunks_used ?? null;
+
+      const CONF_THRESHOLD = 0.65;
+      const isLowConfidence =
+        typeof confidence === "number" && confidence < CONF_THRESHOLD;
+
+      const looksUnsure =
+        typeof answer === "string" &&
+        /^i\s+don['’]?t\s+know/i.test(answer.trim());
+
+      const normalized = (answer || "").toLowerCase();
+      const mentionsNoInfo =
+        normalized.includes("no information in the provided context") ||
+        normalized.includes("not mentioned anywhere in the provided context") ||
+        normalized.includes("no mention of") ||
+        normalized.includes("not mentioned anywhere") ||
+        normalized.includes("i'm not able to provide information");
+
+      const shouldEscalate =
+        !answer || !!error || isLowConfidence || looksUnsure || mentionsNoInfo;
+
+      if (!shouldEscalate) {
+        const html = `<div>${answer}</div>${renderSources(
+          sources,
+          chunkCount
+        )}`;
+        addHTML("bot", html, true);
+        return;
+      }
+
+      // Escalation path to n8n
+      add("sys", "Escalating to customer support…");
+
+      const esc = await safeFetch(ESCALATE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question: q,
+          answer,
+          confidence,
+          error: error ?? "low_confidence",
+          ts: new Date().toISOString(),
+          customer: { email: "user@example.com" }
+        })
+      });
+
+      if (!esc.ok) {
+        add(
+          "sys",
+          `Escalation failed (status ${esc.status}). Error: ${
+            esc.data?.error ?? esc.data?.raw ?? "Unknown"
+          }`
+        );
+        return;
+      }
+
+      const ticketId = esc.data?.ticketId ?? "(pending)";
+      add(
+        "bot",
+        `I couldn’t find a confident answer. I’ve escalated your request. Ticket: ${ticketId}. Our team will reach out shortly.`
+      );
+    }
+
+    askBtn.onclick = () => ask();
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") ask();
+    });
+  </script>
+</body>
+</html>
